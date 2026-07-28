@@ -1,0 +1,15 @@
+[Unit]
+Description=LoveEver Go High-Performance Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/www/loveever/backend
+ExecStart=/www/loveever/backend/loveever-server
+Restart=always
+RestartSec=5s
+Environment=GIN_MODE=release
+
+[Install]
+WantedBy=multi-user.target

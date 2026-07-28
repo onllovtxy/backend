@@ -1,0 +1,16 @@
+# Go Backend
+backend/loveever.db
+backend/data/
+backend/uploads/
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/local.properties
+
+# System & OS
+.DS_Store
+Thumbs.db
+*.log
