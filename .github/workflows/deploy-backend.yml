@@ -1,4 +1,4 @@
-name: 🚀 Self-Hosted 自动部署 Go 后端到云服务器
+name: 🚀 自动部署 Go 后端到云服务器
 
 on:
   push:
@@ -10,30 +10,46 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted
-    env:
-      GOPROXY: https://goproxy.cn,direct
-      GO111MODULE: on
+    runs-on: ubuntu-latest
 
     steps:
       # 1. 拉取仓库最新代码
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 秒级编译 Go 高性能二进制文件
+      # 2. 自动配置 Go 编译环境
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      # 3. 云端编译 Go 高性能二进制可执行文件
       - name: Build Go Binary
         run: |
-          export PATH=$PATH:/usr/bin:/usr/local/bin:/usr/local/go/bin
-          export GOPROXY=https://goproxy.cn,direct
           cd backend
-          go env -w GOPROXY=https://goproxy.cn,direct
           go mod tidy
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o loveever-server main.go
 
-      # 3. 部署二进制文件与资源到运行目录并重启服务
-      - name: Deploy and Restart Service
-        run: |
-          mkdir -p /www/loveever/backend/data /www/loveever/backend/uploads
-          cp backend/loveever-server /www/loveever/backend/loveever-server
-          sudo systemctl restart loveever-backend || sudo systemctl start loveever-backend
-          echo "✅ Self-Hosted 部署成功！"
+      # 4. 通过 SSH 传输到云服务器并重启服务
+      - name: Deploy to Server via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "backend/loveever-server"
+          target: "/www/loveever/backend"
+          strip_components: 1
+
+      # 5. 重启后端服务
+      - name: Restart Backend Service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            chmod +x /www/loveever/backend/loveever-server
+            mkdir -p /www/loveever/backend/data /www/loveever/backend/uploads
+            systemctl restart loveever-backend || systemctl start loveever-backend
+            echo "✅ 自动部署与服务重启完成！"
