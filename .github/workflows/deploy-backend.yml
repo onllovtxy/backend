@@ -1,4 +1,4 @@
-name: 🚀 自动部署 Go 后端到云服务器
+name: 🚀 Self-Hosted 自动部署 Go 后端到云服务器
 
 on:
   push:
@@ -10,45 +10,24 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      # 1. 拉取 GitHub 仓库代码
+      # 1. 拉取仓库最新代码
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 配置 Go 语言编译环境
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      # 3. 编译 Go 高性能二进制可执行文件 (交叉编译 Linux 64位)
-      - name: Build Go Binary for Linux
+      # 2. 本地直接编译 Go 高性能二进制可执行文件
+      - name: Build Go Binary
         run: |
           cd backend
+          go mod tidy
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o loveever-server main.go
 
-      # 4. 通过 SSH 上传二进制文件与配置到您的云服务器
-      - name: Copy Binary to Server via SSH
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
-          source: "backend/loveever-server"
-          target: "/www/loveever/backend"
-          strip_components: 1
-
-      # 5. 在云服务器上自动重启后台服务 (Systemd)
-      - name: Restart Server Service via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
-          script: |
-            sudo systemctl restart loveever-backend || sudo systemctl start loveever-backend
-            echo "✅ Go 后端新版本自动部署成功！"
+      # 3. 部署二进制文件与资源到运行目录并重启服务
+      - name: Deploy and Restart Service
+        run: |
+          mkdir -p /www/loveever/backend/data /www/loveever/backend/uploads
+          cp backend/loveever-server /www/loveever/backend/loveever-server
+          sudo systemctl restart loveever-backend || sudo systemctl start loveever-backend
+          echo "✅ Self-Hosted 部署成功！"
