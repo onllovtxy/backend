@@ -17,10 +17,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 使用服务器本地现成的 Go 1.22 编译环境直接秒级打包
+      # 2. 配置国内 GOPROXY 加速并秒级编译 Go 高性能二进制文件
       - name: Build Go Binary
         run: |
           export PATH=$PATH:/usr/bin:/usr/local/bin:/usr/local/go/bin
+          export GOPROXY=https://goproxy.cn,direct
           cd backend
           go mod tidy
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o loveever-server main.go
