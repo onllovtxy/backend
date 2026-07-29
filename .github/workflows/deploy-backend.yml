@@ -17,14 +17,20 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. 本地直接编译 Go 高性能二进制可执行文件
+      # 2. 自动配置 Go 编译环境
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      # 3. 本地直接编译 Go 高性能二进制可执行文件
       - name: Build Go Binary
         run: |
           cd backend
           go mod tidy
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o loveever-server main.go
 
-      # 3. 部署二进制文件与资源到运行目录并重启服务
+      # 4. 部署二进制文件与资源到运行目录并重启服务
       - name: Deploy and Restart Service
         run: |
           mkdir -p /www/loveever/backend/data /www/loveever/backend/uploads
