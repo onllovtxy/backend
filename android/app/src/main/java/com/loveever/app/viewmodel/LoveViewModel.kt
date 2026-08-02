@@ -1,11 +1,15 @@
 package com.loveever.app.viewmodel
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.loveever.app.api.ApiClient
 import com.loveever.app.api.ApiService
+import com.loveever.app.data.TokenHolder
 import com.loveever.app.data.TokenStore
 import com.loveever.app.model.*
 import kotlinx.coroutines.Job
@@ -14,14 +18,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
 import retrofit2.HttpException
 import retrofit2.Response as RetrofitResponse
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
@@ -58,6 +67,9 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
     private val _memories = MutableStateFlow<List<Memory>>(emptyList())
     val memories: StateFlow<List<Memory>> = _memories.asStateFlow()
 
+    private val _messages = MutableStateFlow<List<Message>>(emptyList())
+    val messages: StateFlow<List<Message>> = _messages.asStateFlow()
+
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
@@ -82,6 +94,7 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
             if (token.isNullOrBlank()) {
                 _auth.value = AuthState.LoggedOut
             } else {
+                TokenHolder.token = token
                 _auth.value = AuthState.LoggedIn(token)
                 refreshAll()
                 connectWebSocket(token)
@@ -143,6 +156,7 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
             ws?.close(1000, "logout")
             ws = null
             tokenStore.clear()
+            TokenHolder.token = null
             _auth.value = AuthState.LoggedOut
             _user.value = null
             _couple.value = null
@@ -150,6 +164,7 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
             _partnerAvatar.value = ""
             _anniversaries.value = emptyList()
             _memories.value = emptyList()
+            _messages.value = emptyList()
         }
     }
 
@@ -268,6 +283,113 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // ========== 聊天 ==========
+
+    fun loadMessages() {
+        val token = currentToken() ?: return
+        viewModelScope.launch {
+            runCatching { api.getMessages(token) }.getOrNull()?.let { resp ->
+                if (resp.isSuccessful) {
+                    resp.body()?.data?.let { _messages.value = it }
+                }
+            }
+        }
+    }
+
+    fun loadOlderMessages() {
+        val token = currentToken() ?: return
+        val oldest = _messages.value.firstOrNull()?.id ?: return
+        viewModelScope.launch {
+            runCatching { api.getMessages(token, beforeId = oldest) }.getOrNull()?.let { resp ->
+                if (resp.isSuccessful) {
+                    resp.body()?.data?.let { older ->
+                        if (older.isNotEmpty()) {
+                            _messages.value = (older + _messages.value).distinctBy { it.id }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun sendText(text: String) {
+        val token = currentToken() ?: return
+        val content = text.trim()
+        if (content.isEmpty()) return
+        viewModelScope.launch {
+            val resp = api.sendMessage(token, SendMessageReq(type = "text", content = content))
+            if (resp.isSuccessful) {
+                resp.body()?.data?.let { appendMessage(it) }
+            } else {
+                _error.value = errorMessage(resp, "发送失败")
+            }
+        }
+    }
+
+    fun sendImage(uri: Uri) {
+        val token = currentToken() ?: return
+        viewModelScope.launch {
+            try {
+                val bytes = compressImage(uri)
+                uploadAndSend(token, bytes, "image.jpg", "image", 0)
+            } catch (e: Exception) {
+                _error.value = "发送图片失败"
+            }
+        }
+    }
+
+    fun sendVoice(file: File, duration: Int) {
+        val token = currentToken() ?: return
+        viewModelScope.launch {
+            try {
+                val bytes = file.readBytes()
+                uploadAndSend(token, bytes, "voice.m4a", "voice", duration.coerceAtLeast(1))
+            } catch (e: Exception) {
+                _error.value = "发送语音失败"
+            }
+        }
+    }
+
+    private suspend fun uploadAndSend(token: String, bytes: ByteArray, filename: String, type: String, duration: Int) {
+        val body = bytes.toRequestBody("application/octet-stream".toMediaType())
+        val part = MultipartBody.Part.createFormData("file", filename, body)
+        val resp = api.upload(token, part)
+        val url = resp.body()?.url
+        if (!resp.isSuccessful || url.isNullOrBlank()) {
+            _error.value = "文件上传失败"
+            return
+        }
+        val sendResp = api.sendMessage(token, SendMessageReq(type = type, content = url, duration = duration))
+        if (sendResp.isSuccessful) {
+            sendResp.body()?.data?.let { appendMessage(it) }
+        } else {
+            _error.value = errorMessage(sendResp, "发送失败")
+        }
+    }
+
+    private fun appendMessage(msg: Message) {
+        _messages.value = (_messages.value + msg).distinctBy { it.id }
+    }
+
+    private fun compressImage(uri: Uri): ByteArray {
+        val resolver = getApplication<Application>().contentResolver
+        val input = resolver.openInputStream(uri) ?: error("cannot read image")
+        val bitmap = BitmapFactory.decodeStream(input)
+        input.close()
+
+        val maxDim = 1280f
+        val scale = minOf(1f, maxDim / maxOf(bitmap.width.toFloat(), bitmap.height.toFloat()))
+        val scaled = if (scale < 1f) {
+            Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true)
+        } else {
+            bitmap
+        }
+
+        val out = ByteArrayOutputStream()
+        scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
+        return out.toByteArray()
+    }
+
     fun clearError() {
         _error.value = null
     }
@@ -279,6 +401,7 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
     private fun currentToken(): String? = (_auth.value as? AuthState.LoggedIn)?.token
 
     private fun applyLoggedIn(token: String) {
+        TokenHolder.token = token
         _auth.value = AuthState.LoggedIn(token)
         refreshAll()
         connectWebSocket(token)
@@ -374,6 +497,10 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
                     if (date.isNotBlank()) {
                         _couple.value = _couple.value?.copy(pairDate = date)
                     }
+                }
+                "message_new" -> {
+                    val msg = gson.fromJson(payload.toString(), Message::class.java)
+                    appendMessage(msg)
                 }
             }
         } catch (e: Exception) {

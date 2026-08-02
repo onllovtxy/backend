@@ -26,10 +26,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.loveever.app.api.ApiService
+import com.loveever.app.data.TokenHolder
 import com.loveever.app.ui.theme.DesignTokens
 
 /** 纪念日图标字段 → 矢量图标映射 */
@@ -201,5 +208,45 @@ fun SkeletonCard(modifier: Modifier = Modifier) {
                 SkeletonBox(modifier = Modifier.width(90.dp).height(11.dp))
             }
         }
+    }
+}
+
+/**
+ * 带鉴权头的数据图片（聊天图片等，来自后端文件服务）。
+ * 公开图片直接传 URL 也会被 Coil 正常加载。
+ */
+@Composable
+fun AuthImage(
+    url: String,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop,
+    placeholder: ImageVector? = null
+) {
+    val fullUrl = if (url.startsWith("/")) ApiService.BASE_URL.trimEnd('/') + url else url
+    val token = TokenHolder.token
+    val model = if (token != null && url.startsWith("/")) {
+        ImageRequest.Builder(LocalContext.current)
+            .data(fullUrl)
+            .setHeader("Authorization", "Bearer $token")
+            .build()
+    } else {
+        fullUrl
+    }
+    if (placeholder != null) {
+        AsyncImage(
+            model = model,
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = contentScale,
+            placeholder = rememberVectorPainter(placeholder)
+        )
+    } else {
+        AsyncImage(
+            model = model,
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = contentScale
+        )
     }
 }

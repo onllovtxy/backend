@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material3.*
@@ -37,7 +38,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 @Composable
-fun HomeScreen(viewModel: LoveViewModel) {
+fun HomeScreen(viewModel: LoveViewModel, onOpenChat: () -> Unit) {
     val couple by viewModel.couple.collectAsState()
     val user by viewModel.user.collectAsState()
     val partnerName by viewModel.partnerName.collectAsState()
@@ -58,14 +59,33 @@ fun HomeScreen(viewModel: LoveViewModel) {
             // 1. 相爱天数 Hero 大卡片
             item {
                 Spacer(modifier = Modifier.height(DesignTokens.spaceMd))
-                HeroCard(
-                    daysCount = daysCount,
-                    pairDate = couple?.pairDate,
-                    myName = user?.displayName.orEmpty().ifBlank { "我" },
-                    myAvatar = user?.avatarUrl,
-                    partnerName = partnerName.ifBlank { "恋人" },
-                    partnerAvatar = partnerAvatar
-                )
+                Box {
+                    HeroCard(
+                        daysCount = daysCount,
+                        pairDate = couple?.pairDate,
+                        myName = user?.displayName.orEmpty().ifBlank { "我" },
+                        myAvatar = user?.avatarUrl,
+                        partnerName = partnerName.ifBlank { "恋人" },
+                        partnerAvatar = partnerAvatar
+                    )
+                    // 聊天入口
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(DesignTokens.spaceMd),
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.3f)
+                    ) {
+                        IconButton(onClick = onOpenChat) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Chat,
+                                contentDescription = "聊天",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             // 2. 重要置顶纪念日

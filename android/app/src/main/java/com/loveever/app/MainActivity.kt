@@ -26,7 +26,6 @@ import com.loveever.app.ui.screens.*
 import com.loveever.app.ui.theme.LoveEverTheme
 import com.loveever.app.viewmodel.AuthState
 import com.loveever.app.viewmodel.LoveViewModel
-
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Home : Screen("home", "首页", Icons.Default.Favorite)
     object Anniversaries : Screen("anniversaries", "清单", Icons.Default.DateRange)
@@ -80,35 +79,36 @@ class MainActivity : ComponentActivity() {
                         Scaffold(
                             snackbarHost = { SnackbarHost(snackbarHostState) },
                             bottomBar = {
-                                NavigationBar(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                ) {
-                                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                                    val currentRoute = navBackStackEntry?.destination?.route
-
-                                    items.forEach { screen ->
-                                        NavigationBarItem(
-                                            icon = { Icon(screen.icon, contentDescription = screen.title) },
-                                            label = { Text(screen.title) },
-                                            selected = currentRoute == screen.route,
-                                            colors = NavigationBarItemDefaults.colors(
-                                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                                            ),
-                                            onClick = {
-                                                if (currentRoute != screen.route) {
-                                                    navController.navigate(screen.route) {
-                                                        popUpTo(navController.graph.startDestinationId) {
-                                                            saveState = true
+                                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                                val currentRoute = navBackStackEntry?.destination?.route
+                                if (currentRoute != "chat") {
+                                    NavigationBar(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ) {
+                                        items.forEach { screen ->
+                                            NavigationBarItem(
+                                                icon = { Icon(screen.icon, contentDescription = screen.title) },
+                                                label = { Text(screen.title) },
+                                                selected = currentRoute == screen.route,
+                                                colors = NavigationBarItemDefaults.colors(
+                                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                                ),
+                                                onClick = {
+                                                    if (currentRoute != screen.route) {
+                                                        navController.navigate(screen.route) {
+                                                            popUpTo(navController.graph.startDestinationId) {
+                                                                saveState = true
+                                                            }
+                                                            launchSingleTop = true
+                                                            restoreState = true
                                                         }
-                                                        launchSingleTop = true
-                                                        restoreState = true
                                                     }
                                                 }
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -118,10 +118,21 @@ class MainActivity : ComponentActivity() {
                                 startDestination = Screen.Home.route,
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                composable(Screen.Home.route) { HomeScreen(viewModel) }
+                                composable(Screen.Home.route) {
+                                    HomeScreen(
+                                        viewModel = viewModel,
+                                        onOpenChat = { navController.navigate("chat") }
+                                    )
+                                }
                                 composable(Screen.Anniversaries.route) { AnniversariesScreen(viewModel) }
                                 composable(Screen.Memories.route) { MemoriesScreen(viewModel) }
                                 composable(Screen.Profile.route) { ProfileScreen(viewModel) }
+                                composable("chat") {
+                                    ChatScreen(
+                                        viewModel = viewModel,
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
                             }
                         }
                     }

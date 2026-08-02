@@ -44,6 +44,16 @@ type Memory struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+type Message struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	CoupleID  uint      `gorm:"index;not null" json:"couple_id"`
+	SenderID  uint      `gorm:"index" json:"sender_id"`
+	Type      string    `json:"type"`    // text | image | voice
+	Content   string    `json:"content"` // 文本内容或 /api/v1/files/xxx 相对路径
+	Duration  int       `json:"duration"` // 语音时长（秒）
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // DTOs
 type RegisterReq struct {
 	Username    string `json:"username" binding:"required"`
@@ -59,4 +69,10 @@ type LoginReq struct {
 
 type PairReq struct {
 	InviteCode string `json:"invite_code" binding:"required"`
+}
+
+type SendMessageReq struct {
+	Type     string `json:"type" binding:"required"` // text | image | voice
+	Content  string `json:"content" binding:"required"`
+	Duration int    `json:"duration"`
 }

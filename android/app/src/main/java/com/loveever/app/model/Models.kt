@@ -36,6 +36,27 @@ data class Memory(
     @SerializedName("image_url") val imageUrl: String = ""
 )
 
+data class Message(
+    val id: Long = 0,
+    @SerializedName("couple_id") val coupleId: Long = 0,
+    @SerializedName("sender_id") val senderId: Long = 0,
+    val type: String = "text", // text | image | voice
+    val content: String = "",
+    val duration: Int = 0,
+    @SerializedName("created_at") val createdAt: String = ""
+)
+
+data class SendMessageReq(
+    val type: String,
+    val content: String,
+    val duration: Int = 0
+)
+
+data class UploadResponse(
+    val url: String? = null,
+    val error: String? = null
+)
+
 data class RegisterRequest(
     val username: String,
     val password: String,

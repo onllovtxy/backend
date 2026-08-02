@@ -56,6 +56,12 @@ func main() {
 			auth.POST("/memories", handlers.CreateMemory)
 			auth.DELETE("/memories/:id", handlers.DeleteMemory)
 
+			// 聊天消息
+			auth.GET("/messages", handlers.GetMessages)
+			auth.POST("/messages", handlers.SendMessage)
+			auth.POST("/upload", handlers.UploadFile)
+			auth.GET("/files/:name", handlers.ServeFile)
+
 			// WebSocket 实时连接
 			auth.GET("/ws", handlers.HandleWebSocket)
 		}

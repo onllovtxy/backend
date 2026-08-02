@@ -1,6 +1,7 @@
 package com.loveever.app.api
 
 import com.loveever.app.model.*
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -66,4 +67,24 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Long
     ): Response<DataResponse<Any>>
+
+    @GET("api/v1/messages")
+    suspend fun getMessages(
+        @Header("Authorization") token: String,
+        @Query("before_id") beforeId: Long = 0,
+        @Query("limit") limit: Int = 50
+    ): Response<DataResponse<List<Message>>>
+
+    @POST("api/v1/messages")
+    suspend fun sendMessage(
+        @Header("Authorization") token: String,
+        @Body request: SendMessageReq
+    ): Response<DataResponse<Message>>
+
+    @Multipart
+    @POST("api/v1/upload")
+    suspend fun upload(
+        @Header("Authorization") token: String,
+        @Part file: MultipartBody.Part
+    ): Response<UploadResponse>
 }
