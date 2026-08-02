@@ -128,20 +128,6 @@ private fun HeroCard(
                 .background(DesignTokens.heroGradient)
                 .padding(DesignTokens.spaceXxl)
         ) {
-            // 装饰圆环
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(140.dp)
-                    .border(1.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .size(90.dp)
-                    .border(1.5.dp, Color.White.copy(alpha = 0.18f), CircleShape)
-            )
-
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,

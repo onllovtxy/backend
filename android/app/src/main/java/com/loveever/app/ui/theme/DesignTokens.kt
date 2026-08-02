@@ -32,12 +32,12 @@ object DesignTokens {
     val heroElevation = 6.dp
     val fabElevation = 4.dp
 
-    // 品牌渐变：玫瑰粉 → 珊瑚粉 → 暖杏
+    // 品牌渐变：暖蜜桃 → 杏橙 → 蜜糖黄
     val heroGradient = Brush.linearGradient(
         colors = listOf(
-            Color(0xFFE94D6C),
-            Color(0xFFFB7A96),
-            Color(0xFFF5A25D)
+            Color(0xFFF27A5B),
+            Color(0xFFF5A25D),
+            Color(0xFFF5C05C)
         )
     )
 
@@ -45,11 +45,11 @@ object DesignTokens {
     val backgroundBrush: Brush
         @Composable get() = if (isSystemInDarkTheme()) {
             Brush.verticalGradient(
-                colors = listOf(Color(0xFF1F1418), Color(0xFF171014))
+                colors = listOf(Color(0xFF221811), Color(0xFF1B130E))
             )
         } else {
             Brush.verticalGradient(
-                colors = listOf(Color(0xFFFFF3F5), Color(0xFFFFFBF9))
+                colors = listOf(Color(0xFFFFF6ED), Color(0xFFFFFBF7))
             )
         }
 }
