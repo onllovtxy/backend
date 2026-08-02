@@ -5,30 +5,65 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
-    @GET("profile")
-    suspend fun getProfile(): Response<ApiResponse<Any>>
+    companion object {
+        // 生产环境后端地址（备案接入完成前使用 http + 20119 端口）
+        const val BASE_URL = "http://8.134.149.235:20119/"
+    }
 
-    @GET("anniversaries")
-    suspend fun getAnniversaries(): Response<ApiResponse<List<Anniversary>>>
+    @POST("api/v1/auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 
-    @POST("anniversaries")
-    suspend fun createAnniversary(@Body req: CreateAnniversaryReq): Response<ApiResponse<Anniversary>>
+    @POST("api/v1/auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
-    @PUT("anniversaries/{id}/pin")
-    suspend fun togglePinAnniversary(@Path("id") id: Long): Response<ApiResponse<Anniversary>>
+    @GET("api/v1/profile")
+    suspend fun getProfile(@Header("Authorization") token: String): Response<ProfileResponse>
 
-    @DELETE("anniversaries/{id}")
-    suspend fun deleteAnniversary(@Path("id") id: Long): Response<ApiResponse<Any>>
+    @POST("api/v1/auth/pair")
+    suspend fun pairCouple(
+        @Header("Authorization") token: String,
+        @Body request: PairRequest
+    ): Response<PairResponse>
 
-    @PUT("couple/pair-date")
-    suspend fun updatePairDate(@Body req: UpdatePairDateReq): Response<ApiResponse<Any>>
+    @GET("api/v1/anniversaries")
+    suspend fun getAnniversaries(@Header("Authorization") token: String): Response<DataResponse<List<Anniversary>>>
 
-    @GET("memories")
-    suspend fun getMemories(): Response<ApiResponse<List<Memory>>>
+    @POST("api/v1/anniversaries")
+    suspend fun createAnniversary(
+        @Header("Authorization") token: String,
+        @Body request: CreateAnniversaryReq
+    ): Response<DataResponse<Anniversary>>
 
-    @POST("memories")
-    suspend fun createMemory(@Body req: CreateMemoryReq): Response<ApiResponse<Memory>>
+    @PUT("api/v1/anniversaries/{id}/pin")
+    suspend fun togglePin(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long
+    ): Response<DataResponse<Anniversary>>
 
-    @DELETE("memories/{id}")
-    suspend fun deleteMemory(@Path("id") id: Long): Response<ApiResponse<Any>>
+    @DELETE("api/v1/anniversaries/{id}")
+    suspend fun deleteAnniversary(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long
+    ): Response<DataResponse<Any>>
+
+    @PUT("api/v1/couple/pair-date")
+    suspend fun updatePairDate(
+        @Header("Authorization") token: String,
+        @Body request: UpdatePairDateReq
+    ): Response<DataResponse<Any>>
+
+    @GET("api/v1/memories")
+    suspend fun getMemories(@Header("Authorization") token: String): Response<DataResponse<List<Memory>>>
+
+    @POST("api/v1/memories")
+    suspend fun createMemory(
+        @Header("Authorization") token: String,
+        @Body request: CreateMemoryReq
+    ): Response<DataResponse<Memory>>
+
+    @DELETE("api/v1/memories/{id}")
+    suspend fun deleteMemory(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long
+    ): Response<DataResponse<Any>>
 }

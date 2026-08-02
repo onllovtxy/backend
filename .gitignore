@@ -10,6 +10,10 @@ android/build/
 android/.idea/
 android/local.properties
 
+# 本地构建的 APK 副本
+LoveEver-debug.apk
+android/LoveEver-debug.apk
+
 # System & OS
 .DS_Store
 Thumbs.db

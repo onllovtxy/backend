@@ -22,6 +22,7 @@ import com.loveever.app.viewmodel.LoveViewModel
 @Composable
 fun AnniversariesScreen(viewModel: LoveViewModel) {
     val anniversaries by viewModel.anniversaries.collectAsState()
+    val refreshing by viewModel.refreshing.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var titleInput by remember { mutableStateOf("") }
     var dateInput by remember { mutableStateOf("2026-05-20") }
@@ -54,6 +55,33 @@ fun AnniversariesScreen(viewModel: LoveViewModel) {
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+            }
+
+            if (refreshing && anniversaries.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFFF43F5E))
+                    }
+                }
+            }
+
+            if (!refreshing && anniversaries.isEmpty()) {
+                item {
+                    Text(
+                        text = "还没有纪念日，点右下角 + 记录一个吧 💕",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             }
 
             items(anniversaries) { anniv ->

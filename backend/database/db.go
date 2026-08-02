@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/glebarez/sqlite"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -52,9 +53,12 @@ func seedInitialData() {
 	}
 	DB.Create(&couple)
 
+	// 演示账号密码统一为 123456
+	demoPwd, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
+
 	userA := models.User{
 		Username:    "user1",
-		Password:    "$2a$10$wN3tV4U8v1Y1.X5M8qF1.e1qX1qX1qX1qX1qX1qX1qX1qX1qX1qX",
+		Password:    string(demoPwd),
 		DisplayName: "宝贝",
 		AvatarURL:   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
 		CoupleID:    &couple.ID,
@@ -64,7 +68,7 @@ func seedInitialData() {
 
 	userB := models.User{
 		Username:    "user2",
-		Password:    "$2a$10$wN3tV4U8v1Y1.X5M8qF1.e1qX1qX1qX1qX1qX1qX1qX1qX1qX1qX",
+		Password:    string(demoPwd),
 		DisplayName: "亲爱的",
 		AvatarURL:   "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
 		CoupleID:    &couple.ID,

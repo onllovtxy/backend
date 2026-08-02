@@ -24,6 +24,7 @@ import com.loveever.app.viewmodel.LoveViewModel
 @Composable
 fun MemoriesScreen(viewModel: LoveViewModel) {
     val memories by viewModel.memories.collectAsState()
+    val refreshing by viewModel.refreshing.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var titleInput by remember { mutableStateOf("") }
     var contentInput by remember { mutableStateOf("") }
@@ -57,6 +58,33 @@ fun MemoriesScreen(viewModel: LoveViewModel) {
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+            }
+
+            if (refreshing && memories.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFFF59E0B))
+                    }
+                }
+            }
+
+            if (!refreshing && memories.isEmpty()) {
+                item {
+                    Text(
+                        text = "还没有回忆，点右下角 + 记录你们的甜蜜瞬间 📸",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             }
 
             items(memories) { mem ->

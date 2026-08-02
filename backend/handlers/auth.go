@@ -5,6 +5,7 @@ import (
 	"loveever-backend/database"
 	"loveever-backend/models"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte("loveever-secret-key-2026")
+func jwtSecret() []byte {
+	if s := os.Getenv("LOVEEVER_JWT_SECRET"); s != "" {
+		return []byte(s)
+	}
+	return []byte("loveever-secret-key-2026")
+}
 
 func GenerateJWT(userID uint, coupleID *uint) (string, error) {
 	var cID uint = 0
@@ -25,7 +31,7 @@ func GenerateJWT(userID uint, coupleID *uint) (string, error) {
 		"exp":       time.Now().Add(time.Hour * 24 * 30).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString(jwtSecret())
 }
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -42,7 +48,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-			return jwtSecret, nil
+			return jwtSecret(), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -99,6 +105,8 @@ func Register(c *gin.Context) {
 	}
 
 	if err := database.DB.Create(&user).Error; err != nil {
+		// 用户名冲突时回滚已创建的 Couple，避免孤儿空间
+		database.DB.Delete(&models.Couple{}, couple.ID)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Username already exists"})
 		return
 	}

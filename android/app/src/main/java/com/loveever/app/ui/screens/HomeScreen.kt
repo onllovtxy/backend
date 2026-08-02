@@ -27,12 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.loveever.app.viewmodel.LoveViewModel
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 @Composable
 fun HomeScreen(viewModel: LoveViewModel) {
     val couple by viewModel.couple.collectAsState()
     val user by viewModel.user.collectAsState()
     val partnerName by viewModel.partnerName.collectAsState()
+    val partnerAvatar by viewModel.partnerAvatar.collectAsState()
     val anniversaries by viewModel.anniversaries.collectAsState()
     val daysCount = viewModel.calculateDaysCount()
 
@@ -91,7 +94,7 @@ fun HomeScreen(viewModel: LoveViewModel) {
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 AsyncImage(
-                                    model = user.avatarUrl,
+                                    model = user?.avatarUrl,
                                     contentDescription = "My Avatar",
                                     modifier = Modifier
                                         .size(64.dp)
@@ -100,7 +103,7 @@ fun HomeScreen(viewModel: LoveViewModel) {
                                     contentScale = ContentScale.Crop
                                 )
                                 Text(
-                                    text = user.displayName,
+                                    text = user?.displayName.orEmpty().ifBlank { "我" },
                                     color = Color.White,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
@@ -125,7 +128,7 @@ fun HomeScreen(viewModel: LoveViewModel) {
 
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 AsyncImage(
-                                    model = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+                                    model = partnerAvatar.ifBlank { null },
                                     contentDescription = "Partner Avatar",
                                     modifier = Modifier
                                         .size(64.dp)
@@ -134,7 +137,7 @@ fun HomeScreen(viewModel: LoveViewModel) {
                                     contentScale = ContentScale.Crop
                                 )
                                 Text(
-                                    text = partnerName,
+                                    text = partnerName.ifBlank { "恋人" },
                                     color = Color.White,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
@@ -178,7 +181,7 @@ fun HomeScreen(viewModel: LoveViewModel) {
                             color = Color.White.copy(alpha = 0.25f)
                         ) {
                             Text(
-                                text = "相爱于 ${couple.pairDate}",
+                                text = "相爱于 ${couple?.pairDate ?: "—"}",
                                 color = Color.White,
                                 fontSize = 12.sp,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
@@ -216,7 +219,7 @@ fun HomeScreen(viewModel: LoveViewModel) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "💖", fontSize = 24.sp, modifier = Modifier.padding(end = 12.dp))
+                        Text(text = iconEmoji(item.icon), fontSize = 24.sp, modifier = Modifier.padding(end = 12.dp))
                         Column {
                             Text(
                                 text = item.title,
@@ -232,14 +235,50 @@ fun HomeScreen(viewModel: LoveViewModel) {
                             )
                         }
                     }
-                    Text(
-                        text = "查看详情",
-                        color = Color(0xFFF43F5E),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = countdownText(item.targetDate),
+                            color = if (daysUntil(item.targetDate) >= 0) Color(0xFFF43F5E) else Color.Gray,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "查看详情",
+                            color = Color(0xFFF43F5E),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun daysUntil(dateStr: String): Long {
+    return try {
+        ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(dateStr))
+    } catch (e: Exception) {
+        0
+    }
+}
+
+private fun countdownText(dateStr: String): String {
+    val diff = daysUntil(dateStr)
+    return when {
+        diff > 0 -> "还有 $diff 天 ❤"
+        diff == 0L -> "就是今天 🎉"
+        else -> "已过去 ${-diff} 天"
+    }
+}
+
+private fun iconEmoji(icon: String): String = when (icon) {
+    "star" -> "⭐"
+    "cake" -> "🎂"
+    "gift" -> "🎁"
+    "music" -> "🎵"
+    "plane" -> "✈️"
+    "camera" -> "📷"
+    else -> "💖"
 }

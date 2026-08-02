@@ -4,6 +4,7 @@ import (
 	"log"
 	"loveever-backend/database"
 	"loveever-backend/handlers"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -60,8 +61,13 @@ func main() {
 		}
 	}
 
-	log.Println("Server running on http://0.0.0.0:8080")
-	if err := r.Run(":8080"); err != nil {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server running on http://0.0.0.0:%s", port)
+	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Server failed to run: %v", err)
 	}
 }

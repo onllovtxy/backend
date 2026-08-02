@@ -4,9 +4,17 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+)
+
+const (
+	writeWait      = 10 * time.Second
+	pongWait       = 60 * time.Second
+	pingPeriod     = 30 * time.Second
+	maxMessageSize = 4096
 )
 
 var upgrader = websocket.Upgrader{
@@ -19,6 +27,7 @@ type Client struct {
 	Conn     *websocket.Conn
 	CoupleID uint
 	UserID   uint
+	writeMu  sync.Mutex
 }
 
 var (
@@ -54,18 +63,18 @@ func HandleWebSocket(c *gin.Context) {
 
 	log.Printf("User %d connected to couple room %d WS", userID, coupleID)
 
-	// Keep connection alive & listen for disconnect
+	// 心跳保活：服务端周期 Ping，客户端需回 Pong
+	go client.pingLoop()
+
+	// 设置读超时与 Pong 处理器
+	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		return conn.SetReadDeadline(time.Now().Add(pongWait))
+	})
+
 	defer func() {
-		conn.Close()
-		hubMutex.Lock()
-		clients := coupleHub[coupleID]
-		for i, cl := range clients {
-			if cl == client {
-				coupleHub[coupleID] = append(clients[:i], clients[i+1:]...)
-				break
-			}
-		}
-		hubMutex.Unlock()
+		removeClient(client)
 		log.Printf("User %d disconnected from couple room %d WS", userID, coupleID)
 	}()
 
@@ -77,12 +86,58 @@ func HandleWebSocket(c *gin.Context) {
 	}
 }
 
+func (cl *Client) pingLoop() {
+	ticker := time.NewTicker(pingPeriod)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		cl.writeMu.Lock()
+		err := cl.Conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait))
+		cl.writeMu.Unlock()
+		if err != nil {
+			removeClient(cl)
+			cl.Conn.Close()
+			return
+		}
+	}
+}
+
+func (cl *Client) sendJSON(msg interface{}) error {
+	cl.writeMu.Lock()
+	defer cl.writeMu.Unlock()
+
+	cl.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := cl.Conn.WriteJSON(msg); err != nil {
+		removeClient(cl)
+		cl.Conn.Close()
+		return err
+	}
+	return nil
+}
+
+func removeClient(client *Client) {
+	hubMutex.Lock()
+	defer hubMutex.Unlock()
+
+	clients := coupleHub[client.CoupleID]
+	for i, cl := range clients {
+		if cl == client {
+			coupleHub[client.CoupleID] = append(clients[:i], clients[i+1:]...)
+			break
+		}
+	}
+	if len(coupleHub[client.CoupleID]) == 0 {
+		delete(coupleHub, client.CoupleID)
+	}
+}
+
 func BroadcastToCouple(coupleID uint, eventType string, payload interface{}) {
 	hubMutex.RLock()
-	defer hubMutex.RUnlock()
+	clients := make([]*Client, 0, len(coupleHub[coupleID]))
+	clients = append(clients, coupleHub[coupleID]...)
+	hubMutex.RUnlock()
 
-	clients, ok := coupleHub[coupleID]
-	if !ok || len(clients) == 0 {
+	if len(clients) == 0 {
 		return
 	}
 
@@ -92,8 +147,7 @@ func BroadcastToCouple(coupleID uint, eventType string, payload interface{}) {
 	}
 
 	for _, client := range clients {
-		err := client.Conn.WriteJSON(msg)
-		if err != nil {
+		if err := client.sendJSON(msg); err != nil {
 			log.Printf("Failed to send WS message to user %d: %v", client.UserID, err)
 		}
 	}

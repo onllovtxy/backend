@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -12,6 +14,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -21,6 +24,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.loveever.app.ui.screens.*
 import com.loveever.app.ui.theme.LoveEverTheme
+import com.loveever.app.viewmodel.AuthState
 import com.loveever.app.viewmodel.LoveViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -37,58 +41,89 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             LoveEverTheme {
-                val navController = rememberNavController()
-                val items = listOf(
-                    Screen.Home,
-                    Screen.Anniversaries,
-                    Screen.Memories,
-                    Screen.Profile
-                )
+                val authState by viewModel.auth.collectAsState()
+                val error by viewModel.error.collectAsState()
+                val info by viewModel.info.collectAsState()
+                val snackbarHostState = remember { SnackbarHostState() }
 
-                Scaffold(
-                    bottomBar = {
-                        NavigationBar(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ) {
-                            val navBackStackEntry by navController.currentBackStackEntryAsState()
-                            val currentRoute = navBackStackEntry?.destination?.route
+                LaunchedEffect(error) {
+                    error?.let {
+                        snackbarHostState.showSnackbar(it)
+                        viewModel.clearError()
+                    }
+                }
+                LaunchedEffect(info) {
+                    info?.let {
+                        snackbarHostState.showSnackbar(it)
+                        viewModel.clearInfo()
+                    }
+                }
 
-                            items.forEach { screen ->
-                                NavigationBarItem(
-                                    icon = { Icon(screen.icon, contentDescription = screen.title) },
-                                    label = { Text(screen.title) },
-                                    selected = currentRoute == screen.route,
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = Color(0xFFF43F5E),
-                                        selectedTextColor = Color(0xFFF43F5E),
-                                        indicatorColor = Color(0xFFFFF1F2)
-                                    ),
-                                    onClick = {
-                                        if (currentRoute != screen.route) {
-                                            navController.navigate(screen.route) {
-                                                popUpTo(navController.graph.startDestinationId) {
-                                                    saveState = true
-                                                }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        }
-                                    }
-                                )
-                            }
+                when (val state = authState) {
+                    is AuthState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFFF43F5E))
                         }
                     }
-                ) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = Screen.Home.route,
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable(Screen.Home.route) { HomeScreen(viewModel) }
-                        composable(Screen.Anniversaries.route) { AnniversariesScreen(viewModel) }
-                        composable(Screen.Memories.route) { MemoriesScreen(viewModel) }
-                        composable(Screen.Profile.route) { ProfileScreen(viewModel) }
+                    is AuthState.LoggedOut -> {
+                        AuthScreen(viewModel)
+                    }
+                    is AuthState.LoggedIn -> {
+                        val navController = rememberNavController()
+                        val items = listOf(
+                            Screen.Home,
+                            Screen.Anniversaries,
+                            Screen.Memories,
+                            Screen.Profile
+                        )
+
+                        Scaffold(
+                            snackbarHost = { SnackbarHost(snackbarHostState) },
+                            bottomBar = {
+                                NavigationBar(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ) {
+                                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                                    val currentRoute = navBackStackEntry?.destination?.route
+
+                                    items.forEach { screen ->
+                                        NavigationBarItem(
+                                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                                            label = { Text(screen.title) },
+                                            selected = currentRoute == screen.route,
+                                            colors = NavigationBarItemDefaults.colors(
+                                                selectedIconColor = Color(0xFFF43F5E),
+                                                selectedTextColor = Color(0xFFF43F5E),
+                                                indicatorColor = Color(0xFFFFF1F2)
+                                            ),
+                                            onClick = {
+                                                if (currentRoute != screen.route) {
+                                                    navController.navigate(screen.route) {
+                                                        popUpTo(navController.graph.startDestinationId) {
+                                                            saveState = true
+                                                        }
+                                                        launchSingleTop = true
+                                                        restoreState = true
+                                                    }
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        ) { innerPadding ->
+                            NavHost(
+                                navController = navController,
+                                startDestination = Screen.Home.route,
+                                modifier = Modifier.padding(innerPadding)
+                            ) {
+                                composable(Screen.Home.route) { HomeScreen(viewModel) }
+                                composable(Screen.Anniversaries.route) { AnniversariesScreen(viewModel) }
+                                composable(Screen.Memories.route) { MemoriesScreen(viewModel) }
+                                composable(Screen.Profile.route) { ProfileScreen(viewModel) }
+                            }
+                        }
                     }
                 }
             }
