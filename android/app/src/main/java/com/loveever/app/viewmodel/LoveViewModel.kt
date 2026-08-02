@@ -70,6 +70,13 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
+
+    /** 聊天页是否打开：打开时恋人消息自动已读 */
+    @Volatile
+    var chatOpen = false
+
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
@@ -368,7 +375,15 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun appendMessage(msg: Message) {
+        val existed = _messages.value.any { it.id == msg.id }
         _messages.value = (_messages.value + msg).distinctBy { it.id }
+        if (!existed && msg.senderId != _user.value?.id && !chatOpen) {
+            _unreadCount.value = _unreadCount.value + 1
+        }
+    }
+
+    fun markChatRead() {
+        _unreadCount.value = 0
     }
 
     private fun compressImage(uri: Uri): ByteArray {

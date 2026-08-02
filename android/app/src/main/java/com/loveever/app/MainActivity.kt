@@ -8,15 +8,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,11 +26,13 @@ import com.loveever.app.ui.screens.*
 import com.loveever.app.ui.theme.LoveEverTheme
 import com.loveever.app.viewmodel.AuthState
 import com.loveever.app.viewmodel.LoveViewModel
+
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Home : Screen("home", "首页", Icons.Default.Favorite)
-    object Anniversaries : Screen("anniversaries", "清单", Icons.Default.DateRange)
-    object Memories : Screen("memories", "时光墙", Icons.Default.Star)
-    object Profile : Screen("profile", "我的", Icons.Default.Person)
+    object Conversations : Screen("conversations", "消息", Icons.AutoMirrored.Filled.Chat)
+    object Home : Screen("home", "首页", Icons.Filled.Favorite)
+    object Memories : Screen("memories", "时光墙", Icons.Filled.PhotoCamera)
+    object Anniversaries : Screen("anniversaries", "纪念日", Icons.Filled.CalendarMonth)
+    object Profile : Screen("profile", "我的", Icons.Filled.Person)
 }
 
 class MainActivity : ComponentActivity() {
@@ -69,10 +71,12 @@ class MainActivity : ComponentActivity() {
                     }
                     is AuthState.LoggedIn -> {
                         val navController = rememberNavController()
+                        val unreadCount by viewModel.unreadCount.collectAsState()
                         val items = listOf(
+                            Screen.Conversations,
                             Screen.Home,
-                            Screen.Anniversaries,
                             Screen.Memories,
+                            Screen.Anniversaries,
                             Screen.Profile
                         )
 
@@ -88,7 +92,19 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         items.forEach { screen ->
                                             NavigationBarItem(
-                                                icon = { Icon(screen.icon, contentDescription = screen.title) },
+                                                icon = {
+                                                    Box {
+                                                        Icon(
+                                                            screen.icon,
+                                                            contentDescription = screen.title
+                                                        )
+                                                        if (screen == Screen.Conversations && unreadCount > 0) {
+                                                            Badge {
+                                                                Text("$unreadCount")
+                                                            }
+                                                        }
+                                                    }
+                                                },
                                                 label = { Text(screen.title) },
                                                 selected = currentRoute == screen.route,
                                                 colors = NavigationBarItemDefaults.colors(
@@ -115,17 +131,18 @@ class MainActivity : ComponentActivity() {
                         ) { innerPadding ->
                             NavHost(
                                 navController = navController,
-                                startDestination = Screen.Home.route,
+                                startDestination = Screen.Conversations.route,
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                composable(Screen.Home.route) {
-                                    HomeScreen(
+                                composable(Screen.Conversations.route) {
+                                    ConversationScreen(
                                         viewModel = viewModel,
                                         onOpenChat = { navController.navigate("chat") }
                                     )
                                 }
-                                composable(Screen.Anniversaries.route) { AnniversariesScreen(viewModel) }
+                                composable(Screen.Home.route) { HomeScreen(viewModel) }
                                 composable(Screen.Memories.route) { MemoriesScreen(viewModel) }
+                                composable(Screen.Anniversaries.route) { AnniversariesScreen(viewModel) }
                                 composable(Screen.Profile.route) { ProfileScreen(viewModel) }
                                 composable("chat") {
                                     ChatScreen(

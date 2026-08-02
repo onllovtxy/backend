@@ -2,8 +2,10 @@ package com.loveever.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -54,29 +56,31 @@ fun MemoriesScreen(viewModel: LoveViewModel) {
         }
     ) { paddingValues ->
         Box(modifier = Modifier.background(DesignTokens.backgroundBrush)) {
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = DesignTokens.spaceLg),
-                verticalArrangement = Arrangement.spacedBy(DesignTokens.spaceLg)
+                horizontalArrangement = Arrangement.spacedBy(DesignTokens.spaceMd),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.spaceMd)
             ) {
-                item {
+                item(span = { GridItemSpan(2) }) {
                     SectionHeader(
                         icon = Icons.Filled.PhotoCamera,
-                        title = "时光回忆",
+                        title = "时光墙",
                         modifier = Modifier.padding(vertical = DesignTokens.spaceLg)
                     )
                 }
 
                 when {
                     refreshing && memories.isEmpty() -> {
-                        items(2) {
+                        items(4) {
                             SkeletonCard()
                         }
                     }
                     memories.isEmpty() -> {
-                        item {
+                        item(span = { GridItemSpan(2) }) {
                             EmptyState(
                                 icon = Icons.Filled.PhotoCamera,
                                 title = "还没有回忆",
@@ -141,13 +145,28 @@ private fun MemoryCard(
                     contentDescription = title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(190.dp)
+                        .height(110.dp)
                         .clip(RoundedCornerShape(topStart = DesignTokens.radiusLg, topEnd = DesignTokens.radiusLg)),
                     contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(110.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.PhotoCamera,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
 
-            Column(modifier = Modifier.padding(DesignTokens.spaceLg)) {
+            Column(modifier = Modifier.padding(DesignTokens.spaceMd)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -156,42 +175,39 @@ private fun MemoryCard(
                     Text(
                         text = title,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
+                        fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1
                     )
-                    IconButton(onClick = { confirmDelete = true }) {
+                    IconButton(
+                        onClick = { confirmDelete = true },
+                        modifier = Modifier.size(28.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.Delete,
                             contentDescription = "删除回忆",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = DesignTokens.spaceSm)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.DateRange,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "  $date",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
+                Text(
+                    text = date,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
 
                 Text(
                     text = content,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }

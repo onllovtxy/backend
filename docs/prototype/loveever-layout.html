@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>恋念 LoveEver · 布局原型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #2b211c;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 30px;
+  }
+  .side-note { color: #cbb9ac; max-width: 300px; line-height: 1.9; font-size: 14px; }
+  .side-note h2 { color: #f5c05c; margin-bottom: 12px; }
+  .side-note ul { padding-left: 18px; }
+  .side-note li { margin-bottom: 8px; }
+  .phone {
+    width: 380px; height: 780px; background: #fff9f3;
+    border-radius: 42px; border: 10px solid #1a120d;
+    box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .statusbar { height: 30px; display: flex; justify-content: space-between; align-items: center;
+    padding: 0 18px; font-size: 12px; font-weight: 600; color: #5a4638; background: #fff9f3; flex-shrink: 0; }
+  .screen { flex: 1; overflow-y: auto; position: relative; scrollbar-width: none; }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen > .page { display: none; min-height: 100%; }
+  .screen > .page.active { display: block; }
+
+  /* ---------- 底部导航 ---------- */
+  .tabbar {
+    height: 64px; background: #ffffff; border-top: 1px solid #f0e4d8;
+    display: flex; flex-shrink: 0;
+  }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    color: #a39080; font-size: 10.5px; cursor: pointer; transition: color .2s; user-select: none; }
+  .tab svg { width: 22px; height: 22px; fill: currentColor; }
+  .tab.active { color: #e2673f; }
+  .tab .dot { position: absolute; width: 8px; height: 8px; background: #e53935; border-radius: 50%; margin: -26px 0 0 22px; }
+
+  /* ---------- 通用卡片 ---------- */
+  .card { background: #fff; border-radius: 20px; box-shadow: 0 2px 8px rgba(90,70,56,.06); }
+  .pad { padding: 16px; }
+  .section-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: #3a2a20; margin: 18px 16px 10px; }
+  .ic { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  /* ---------- 首页 ---------- */
+  .hero {
+    margin: 12px 16px; border-radius: 28px; padding: 22px; color: #fff; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #f27a5b, #f5a25d 55%, #f5c05c);
+    box-shadow: 0 10px 24px rgba(226,103,63,.3);
+  }
+  .hero .greet { font-size: 12px; opacity: .9; display: flex; justify-content: space-between; align-items: center; }
+  .hero .greet b { font-size: 15px; }
+  .hero .heart { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.28);
+    display: flex; align-items: center; justify-content: center; animation: beat 1.2s infinite; }
+  @keyframes beat { 0%,100% { transform: scale(1);} 50% { transform: scale(1.15);} }
+  .hero .days { text-align: center; margin: 14px 0 10px; }
+  .hero .days .num { font-size: 52px; font-weight: 800; letter-spacing: 1px; }
+  .hero .days .unit { font-size: 18px; font-weight: 600; }
+  .hero .days .label { font-size: 12px; opacity: .9; margin-top: 2px; }
+  .hero .pill { display: inline-flex; background: rgba(255,255,255,.28); border-radius: 50px; padding: 5px 14px; font-size: 11px; }
+  .hero .row2 { display: flex; justify-content: space-between; align-items: flex-end; }
+  .avatars { display: flex; align-items: center; }
+  .avatars .av { width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #fff; display: flex; align-items: center; justify-content: center; color:#fff; font-size: 18px; }
+  .avatars .av.a { background: linear-gradient(135deg,#f291b6,#e2673f); }
+  .avatars .av.b { background: linear-gradient(135deg,#8ecae6,#5a7d9a); margin-left: -10px; }
+  .avatars .names { margin-left: 10px; font-size: 12px; }
+
+  .countdown { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .countdown .big-ic { width: 42px; height: 42px; border-radius: 50%; background: #ffe2d4; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .countdown .info { flex: 1; }
+  .countdown .info .t { font-size: 14px; font-weight: 700; color: #3a2a20; }
+  .countdown .info .d { font-size: 11px; color: #a39080; margin-top: 2px; }
+  .countdown .ct { text-align: right; }
+  .countdown .ct .n { font-size: 13px; font-weight: 700; color: #e2673f; }
+  .countdown .ct .s { font-size: 11px; color: #a39080; }
+
+  .timeline { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 8px; scrollbar-width: none; }
+  .tl-card { flex-shrink: 0; width: 130px; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 2px 6px rgba(90,70,56,.08); }
+  .tl-card .img { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .tl-card .t { font-size: 11px; font-weight: 600; color: #3a2a20; padding: 8px 10px 6px; }
+  .tl-card .d { font-size: 10px; color: #a39080; padding: 0 10px 8px; }
+
+  /* ---------- 消息 ---------- */
+  .msg-list { padding: 0 16px; }
+  .conv { display: flex; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid #f5ebe0; cursor: pointer; }
+  .conv .av { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg,#f5a25d,#e2673f); display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0;}
+  .conv .mid { flex: 1; overflow: hidden; }
+  .conv .mid .name { font-size: 15px; font-weight: 700; color: #3a2a20; }
+  .conv .mid .last { font-size: 12.5px; color: #a39080; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+  .conv .right { text-align: right; }
+  .conv .right .time { font-size: 10.5px; color: #c0b0a0; }
+  .conv .right .badge { margin-top: 5px; margin-left: auto; width: 18px; height: 18px; background: #e2673f; color:#fff; font-size: 10px; border-radius: 9px; display:flex;align-items:center;justify-content:center;}
+
+  /* 聊天视图 */
+  .chat-head { display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f5ebe0;background:#fff;}
+  .chat-head .back { font-size: 20px; color: #5a4638; cursor: pointer; }
+  .chat-head .av { width: 34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f5a25d,#e2673f);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;}
+  .chat-head .nm { font-size: 15px; font-weight: 700; color:#3a2a20; }
+  .chat-head .st { font-size: 10.5px; color:#10b981; }
+  .bubbles { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .b { display: flex; }
+  .b.me { justify-content: flex-end; }
+  .b .bub { max-width: 74%; border-radius: 18px 18px 4px 18px; padding: 9px 14px; font-size: 14px; line-height: 1.5; }
+  .b.me .bub { background: #e2673f; color: #fff; border-radius: 18px 18px 18px 4px; }
+  .b.other .bub { background: #f5ebe0; color: #3a2a20; }
+  .b .bub.voice { display: flex; align-items: center; gap: 8px; }
+  .b .bub.img { padding: 4px; }
+  .b .bub.img .photo { width: 200px; height: 140px; border-radius: 14px; background: linear-gradient(135deg,#ffd9c0,#ffb59b); display:flex;align-items:center;justify-content:center;font-size:26px; }
+  .b .time { font-size: 9.5px; color: #c0b0a0; margin-top: 3px; text-align: center; }
+  .inputbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid #f5ebe0; background: #fff; }
+  .inputbar .add { font-size: 22px; color: #e2673f; cursor: pointer; }
+  .inputbar .field { flex: 1; background: #f7f0e8; border-radius: 22px; padding: 9px 14px; font-size: 13px; color: #a39080; }
+  .inputbar .send { width: 38px; height: 38px; border-radius: 50%; background: #e2673f; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+
+  /* ---------- 时光墙 ---------- */
+  .wall { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 16px; }
+  .wall .w { border-radius: 16px; overflow: hidden; box-shadow: 0 2px 6px rgba(90,70,56,.08); }
+  .wall .w .img { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+  .wall .w .cap { background:#fff; padding: 8px 10px; }
+  .wall .w .cap .t { font-size: 12px; font-weight: 600; color:#3a2a20; }
+  .wall .w .cap .d { font-size: 10px; color:#a39080; margin-top:2px; }
+  .fab { position: absolute; right: 16px; bottom: 16px; width: 52px; height: 52px; border-radius: 16px; background: #e2673f; color:#fff; display:flex;align-items:center;justify-content:center; font-size: 26px; box-shadow: 0 8px 18px rgba(226,103,63,.4); cursor: pointer;}
+
+  /* ---------- 纪念日 ---------- */
+  .anniv { display:flex;align-items:center;gap:12px;padding:14px 16px;margin:0 16px 10px; }
+  .anniv .big-ic { width: 40px;height:40px;border-radius:50%;background:#ffe2d4;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+  .anniv .info { flex:1; }
+  .anniv .info .t { font-size:14.5px; font-weight:700; color:#3a2a20;}
+  .anniv .info .d { font-size:11px;color:#a39080;margin-top:2px;font-family:monospace;}
+  .anniv .ct { font-size:12px;font-weight:700;color:#e2673f;}
+  .anniv .ct.past { color:#a39080; }
+
+  /* ---------- 我的 ---------- */
+  .me-hero { margin: 12px 16px; padding: 18px; display:flex; align-items:center; gap: 14px; }
+  .me-hero .av { width: 58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#f5a25d,#e2673f);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;border:2.5px solid #ffe2d4;}
+  .me-hero .nm { font-size:17px;font-weight:800;color:#3a2a20;}
+  .me-hero .sub { font-size:12px;color:#a39080;margin-top:3px;}
+  .me-row { display:flex;align-items:center;gap:12px;padding:15px 16px;margin:0 16px 10px;cursor:pointer;}
+  .me-row .ic { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px; }
+  .me-row .label { flex:1;font-size:14px;font-weight:600;color:#3a2a20;}
+  .me-row .arrow { color:#c0b0a0;font-size:14px;}
+  .logout { margin: 20px 16px 10px; text-align:center; padding:14px; border:1.5px solid #f0a6a6; border-radius:16px; color:#e06b6b; font-weight:700; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="statusbar"><span>21:45</span><span>📶 🔋 100%</span></div>
+  <div class="screen" id="screen">
+
+    <!-- ============ 首页 ============ -->
+    <div class="page" id="page-home">
+      <div class="hero">
+        <div class="greet"><span><b>我们在一起已经</b></span><span class="heart">❤</span></div>
+        <div class="days">
+          <span class="num">1120</span><span class="unit"> 天</span>
+          <div class="label">从 2023-05-20 到今天，每一天都算数</div>
+        </div>
+        <div class="row2">
+          <div class="avatars">
+            <div class="av a">宝</div><div class="av b">亲</div>
+            <div class="names"><div>宝贝 💕 亲爱的</div><div style="font-size:10px;opacity:.85">已绑定 · 实时同步</div></div>
+          </div>
+          <span class="pill">相爱于 2023-05-20</span>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="ic" style="background:#ffe2d4">⏰</span>最近的重要日子</div>
+      <div class="card countdown">
+        <div class="big-ic">🎂</div>
+        <div class="info"><div class="t">宝贝的生日</div><div class="d">2026-10-24</div></div>
+        <div class="ct"><div class="n">还有 82 天</div><div class="s">已置顶</div></div>
+      </div>
+      <div class="card countdown">
+        <div class="big-ic">💍</div>
+        <div class="info"><div class="t">相识 1000 天纪念</div><div class="d">2026-02-14</div></div>
+        <div class="ct"><div class="n">已过去 170 天</div><div class="s">已置顶</div></div>
+      </div>
+
+      <div class="section-title"><span class="ic" style="background:#ffe8cf">📸</span>最近的回忆</div>
+      <div class="timeline">
+        <div class="tl-card"><div class="img" style="background:linear-gradient(135deg,#ffd9c0,#ffb59b)">🌊</div><div class="t">第一次看海</div><div class="d">2023-08-15</div></div>
+        <div class="tl-card"><div class="img" style="background:linear-gradient(135deg,#c8e6c9,#a5d6a7)">🍜</div><div class="t">一起吃的第一顿火锅</div><div class="d">2023-06-01</div></div>
+        <div class="tl-card"><div class="img" style="background:linear-gradient(135deg,#bbdefb,#90caf9)">🎡</div><div class="t">游乐场一日游</div><div class="d">2024-03-09</div></div>
+      </div>
+    </div>
+
+    <!-- ============ 消息 ============ -->
+    <div class="page" id="page-chat">
+      <div style="padding:16px 16px 8px;font-size:20px;font-weight:800;color:#3a2a20">消息</div>
+      <div class="msg-list" id="convList">
+        <div class="conv" onclick="showChat()">
+          <div class="av">亲</div>
+          <div class="mid"><div class="name">亲爱的</div><div class="last">语音 8″ · 我想你了❤️</div></div>
+          <div class="right"><div class="time">刚刚</div><div class="badge">2</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 聊天视图 -->
+    <div class="page" id="page-room" style="display:none">
+      <div class="chat-head">
+        <span class="back" onclick="backToConvs()">←</span>
+        <div class="av">亲</div>
+        <div><div class="nm">亲爱的</div><div class="st">● 在线</div></div>
+      </div>
+      <div class="bubbles">
+        <div class="b other"><div class="bub">宝宝，今天想你了</div></div>
+        <div class="b other"><div class="time">21:40</div></div>
+        <div class="b other"><div class="bub voice">▶ 8″</div></div>
+        <div class="b me"><div class="bub">我也想你呀 ❤️</div></div>
+        <div class="b me"><div class="time">21:42</div></div>
+        <div class="b me"><div class="bub img"><div class="photo">🏖️</div></div></div>
+      </div>
+      <div class="inputbar">
+        <span class="add">🖼</span>
+        <div class="field">说点什么…</div>
+        <span class="add">🎤</span>
+        <div class="send">➤</div>
+      </div>
+    </div>
+
+    <!-- ============ 时光墙 ============ -->
+    <div class="page" id="page-mem">
+      <div style="padding:16px 16px 8px;font-size:20px;font-weight:800;color:#3a2a20">时光墙</div>
+      <div class="wall">
+        <div class="w"><div class="img" style="background:linear-gradient(135deg,#ffd9c0,#ffb59b)">🌊</div><div class="cap"><div class="t">第一次看海</div><div class="d">2023-08-15</div></div></div>
+        <div class="w"><div class="img" style="background:linear-gradient(135deg,#ffecb3,#ffe082)">🍰</div><div class="cap"><div class="t">生日惊喜</div><div class="d">2025-10-24</div></div></div>
+        <div class="w"><div class="img" style="background:linear-gradient(135deg,#c8e6c9,#a5d6a7)">🍜</div><div class="cap"><div class="t">第一顿火锅</div><div class="d">2023-06-01</div></div></div>
+        <div class="w"><div class="img" style="background:linear-gradient(135deg,#bbdefb,#90caf9)">🎡</div><div class="cap"><div class="t">游乐场</div><div class="d">2024-03-09</div></div></div>
+      </div>
+      <div class="fab">＋</div>
+    </div>
+
+    <!-- ============ 纪念日 ============ -->
+    <div class="page" id="page-anniv">
+      <div style="padding:16px 16px 8px;font-size:20px;font-weight:800;color:#3a2a20">纪念日</div>
+      <div class="card anniv"><div class="big-ic">💖</div><div class="info"><div class="t">相爱在一起</div><div class="d">2023-05-20</div></div><div class="ct past">已过 1120 天</div></div>
+      <div class="card anniv"><div class="big-ic">💍</div><div class="info"><div class="t">相识 1000 天纪念</div><div class="d">2026-02-14</div></div><div class="ct past">已过 170 天</div></div>
+      <div class="card anniv"><div class="big-ic">🎂</div><div class="info"><div class="t">宝贝的生日</div><div class="d">2026-10-24</div></div><div class="ct">还有 82 天</div></div>
+      <div class="card anniv"><div class="big-ic">✈️</div><div class="info"><div class="t">蜜月旅行计划</div><div class="d">2027-01-01</div></div><div class="ct">还有 151 天</div></div>
+      <div class="fab">＋</div>
+    </div>
+
+    <!-- ============ 我的 ============ -->
+    <div class="page" id="page-me">
+      <div class="me-hero card">
+        <div class="av">宝</div>
+        <div><div class="nm">宝贝</div><div class="sub">@user1 · 已与「亲爱的」绑定</div></div>
+      </div>
+      <div class="card me-row"><span class="ic" style="background:#ffe2d4">🔗</span><span class="label">我的邀请码</span><span style="font-family:monospace;color:#e2673f;font-weight:700">LOVE-520</span><span class="arrow">›</span></div>
+      <div class="card me-row"><span class="ic" style="background:#ffe8cf">📅</span><span class="label">相爱日期</span><span style="color:#a39080;font-size:13px">2023-05-20</span><span class="arrow">›</span></div>
+      <div class="card me-row"><span class="ic" style="background:#e8f5e9">🖼</span><span class="label">头像与昵称</span><span class="arrow">›</span></div>
+      <div class="card me-row"><span class="ic" style="background:#ede7f6">🎨</span><span class="label">主题色</span><span class="arrow">›</span></div>
+      <div class="card me-row"><span class="ic" style="background:#e3f2fd">⚙️</span><span class="label">后端服务状态</span><span style="color:#10b981;font-size:12px">● 在线</span><span class="arrow">›</span></div>
+      <div class="logout">退出登录</div>
+    </div>
+
+  </div>
+  <div class="tabbar" id="tabbar">
+    <div class="tab active" data-page="chat">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      消息<span class="dot" style="display:none"></span>
+    </div>
+    <div class="tab" data-page="home">
+      <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      首页
+    </div>
+    <div class="tab" data-page="mem">
+      <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      时光墙
+    </div>
+    <div class="tab" data-page="anniv">
+      <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+      纪念日
+    </div>
+    <div class="tab" data-page="me">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      我的
+    </div>
+  </div>
+</div>
+
+<div class="side-note">
+  <h2>这份布局的设计思路</h2>
+  <ul>
+    <li><b>5 个底部 tab</b>：消息 / 首页 / 时光墙 / 纪念日 / 我的 —— 聊天从"角落按钮"升级成一级入口（主流做法）</li>
+    <li><b>首页信息密度提升</b>：天数大卡 → 最近重要日子（倒计时）→ 最近回忆横滑 —— 打开 App 一眼看完"我们的一切"</li>
+    <li><b>消息页</b>：会话列表 + 未读红点，点进气泡聊天（文字/图片/语音）</li>
+    <li><b>时光墙</b>：双列瀑布流，比现在的单列长列表更"相册"</li>
+    <li><b>我的</b>：个人信息 + 邀请码 + 设置分组，和竞品对齐</li>
+  </ul>
+  <p style="margin-top:14px;color:#f5c05c">👉 点底部 tab 切换页面，点"消息"里的会话进聊天视图，再点 ← 返回。</p>
+  <p style="margin-top:10px;font-size:12px;opacity:.7">竞品截图：<br>
+  小恩爱 zhimg.com/v2-32da8b20...jpg<br>
+  微爱 zhimg.com/v2-34b663fd...jpg<br>
+  （上一条消息里有完整链接）</p>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const pages = ['chat','home','mem','anniv','me'];
+  function switchPage(p){
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    const target = document.getElementById('page-'+p);
+    target.classList.add('active');
+    document.getElementById('screen').scrollTop = 0;
+    tabs.forEach(t=>t.classList.toggle('active', t.dataset.page===p));
+    if(p==='chat') showConvList();
+  }
+  function showConvList(){
+    document.getElementById('convList').style.display='block';
+    document.getElementById('page-room').style.display='none';
+  }
+  function showChat(){
+    document.getElementById('convList').style.display='none';
+    document.getElementById('page-room').style.display='block';
+  }
+  function backToConvs(){ showConvList(); }
+  tabs.forEach(t=>t.addEventListener('click',()=>switchPage(t.dataset.page)));
+  document.querySelector('.tab[data-page="chat"] .dot').style.display='flex';
+</script>
+</body>
+</html>

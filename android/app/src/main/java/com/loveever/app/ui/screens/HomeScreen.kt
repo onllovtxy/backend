@@ -5,13 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,12 +39,13 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 @Composable
-fun HomeScreen(viewModel: LoveViewModel, onOpenChat: () -> Unit) {
+fun HomeScreen(viewModel: LoveViewModel) {
     val couple by viewModel.couple.collectAsState()
     val user by viewModel.user.collectAsState()
     val partnerName by viewModel.partnerName.collectAsState()
     val partnerAvatar by viewModel.partnerAvatar.collectAsState()
     val anniversaries by viewModel.anniversaries.collectAsState()
+    val memories by viewModel.memories.collectAsState()
     val refreshing by viewModel.refreshing.collectAsState()
     val daysCount = viewModel.calculateDaysCount()
 
@@ -59,40 +61,21 @@ fun HomeScreen(viewModel: LoveViewModel, onOpenChat: () -> Unit) {
             // 1. 相爱天数 Hero 大卡片
             item {
                 Spacer(modifier = Modifier.height(DesignTokens.spaceMd))
-                Box {
-                    HeroCard(
-                        daysCount = daysCount,
-                        pairDate = couple?.pairDate,
-                        myName = user?.displayName.orEmpty().ifBlank { "我" },
-                        myAvatar = user?.avatarUrl,
-                        partnerName = partnerName.ifBlank { "恋人" },
-                        partnerAvatar = partnerAvatar
-                    )
-                    // 聊天入口
-                    Surface(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(DesignTokens.spaceMd),
-                        shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.3f)
-                    ) {
-                        IconButton(onClick = onOpenChat) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Chat,
-                                contentDescription = "聊天",
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                }
+                HeroCard(
+                    daysCount = daysCount,
+                    pairDate = couple?.pairDate,
+                    myName = user?.displayName.orEmpty().ifBlank { "我" },
+                    myAvatar = user?.avatarUrl,
+                    partnerName = partnerName.ifBlank { "恋人" },
+                    partnerAvatar = partnerAvatar
+                )
             }
 
             // 2. 重要置顶纪念日
             item {
                 SectionHeader(
                     icon = Icons.Filled.Favorite,
-                    title = "重要纪念日",
+                    title = "最近的重要日子",
                     modifier = Modifier.padding(top = DesignTokens.spaceSm)
                 )
             }
@@ -108,7 +91,7 @@ fun HomeScreen(viewModel: LoveViewModel, onOpenChat: () -> Unit) {
                         EmptyState(
                             icon = Icons.Filled.SentimentSatisfied,
                             title = "还没有置顶纪念日",
-                            subtitle = "去「清单」里添加一个，并点亮星标就会出现在这里"
+                            subtitle = "去「纪念日」里添加一个，并点亮星标就会出现在这里"
                         )
                     }
                 }
@@ -122,6 +105,80 @@ fun HomeScreen(viewModel: LoveViewModel, onOpenChat: () -> Unit) {
                     }
                 }
             }
+
+            // 3. 最近的回忆横滑流
+            if (memories.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        icon = Icons.Filled.PhotoLibrary,
+                        title = "最近的回忆",
+                        modifier = Modifier.padding(top = DesignTokens.spaceSm)
+                    )
+                }
+                item {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(DesignTokens.spaceMd)
+                    ) {
+                        items(memories.take(10), key = { it.id }) { mem ->
+                            MemoryPreviewCard(
+                                title = mem.title,
+                                date = mem.memoryDate,
+                                imageUrl = mem.imageUrl
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MemoryPreviewCard(title: String, date: String, imageUrl: String) {
+    Column(
+        modifier = Modifier
+            .width(132.dp)
+            .clip(RoundedCornerShape(DesignTokens.radiusLg))
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        if (imageUrl.isNotBlank()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.PhotoLibrary,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        Column(modifier = Modifier.padding(10.dp)) {
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
+            )
+            Text(
+                text = date,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp)
+            )
         }
     }
 }

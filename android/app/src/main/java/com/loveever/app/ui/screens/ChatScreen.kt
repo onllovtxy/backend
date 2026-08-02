@@ -61,7 +61,11 @@ fun ChatScreen(viewModel: LoveViewModel, onBack: () -> Unit) {
     val player = remember { ChatPlayer(context) }
     var playingId by remember { mutableStateOf<Long?>(null) }
     DisposableEffect(Unit) {
+        // 进入聊天页：标记已读并开始接收实时消息
+        viewModel.chatOpen = true
+        viewModel.markChatRead()
         onDispose {
+            viewModel.chatOpen = false
             recorder.release()
             player.release()
         }
