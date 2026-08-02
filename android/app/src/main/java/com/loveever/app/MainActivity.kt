@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                 when (val state = authState) {
                     is AuthState.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Color(0xFFF43F5E))
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         }
                     }
                     is AuthState.LoggedOut -> {
@@ -93,9 +93,9 @@ class MainActivity : ComponentActivity() {
                                             label = { Text(screen.title) },
                                             selected = currentRoute == screen.route,
                                             colors = NavigationBarItemDefaults.colors(
-                                                selectedIconColor = Color(0xFFF43F5E),
-                                                selectedTextColor = Color(0xFFF43F5E),
-                                                indicatorColor = Color(0xFFFFF1F2)
+                                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
                                             ),
                                             onClick = {
                                                 if (currentRoute != screen.route) {

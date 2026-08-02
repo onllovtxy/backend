@@ -178,10 +178,10 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addAnniversary(title: String, date: String, isPinned: Boolean) {
+    fun addAnniversary(title: String, date: String, isPinned: Boolean, icon: String = "heart") {
         val token = currentToken() ?: return
         viewModelScope.launch {
-            val resp = api.createAnniversary(token, CreateAnniversaryReq(title, date, isPinned))
+            val resp = api.createAnniversary(token, CreateAnniversaryReq(title, date, isPinned, icon))
             if (resp.isSuccessful) {
                 resp.body()?.data?.let { anniv ->
                     _anniversaries.value = listOf(anniv) + _anniversaries.value.filter { it.id != anniv.id }

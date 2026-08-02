@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -20,6 +19,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.loveever.app.ui.theme.DesignTokens
 import com.loveever.app.viewmodel.LoveViewModel
 
 @Composable
@@ -36,52 +36,49 @@ fun AuthScreen(viewModel: LoveViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFFFFF1F2), Color(0xFFFFE3E8), Color(0xFFFFF7ED))
-                )
-            )
+            .background(DesignTokens.backgroundBrush)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp, vertical = 48.dp),
+                .padding(horizontal = DesignTokens.spaceXxl)
+                .padding(vertical = DesignTokens.spaceSection),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Default.Favorite,
-                contentDescription = "LoveEver",
-                tint = Color(0xFFF43F5E),
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = "恋念",
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(56.dp)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(DesignTokens.spaceMd))
             Text(
                 text = "恋念 LoveEver",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFFF43F5E)
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = "记录我们的每一个重要时刻",
                 fontSize = 14.sp,
-                color = Color(0xFF9CA3AF),
-                modifier = Modifier.padding(top = 4.dp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = DesignTokens.spaceXs)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(DesignTokens.spaceSection))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                shape = RoundedCornerShape(DesignTokens.radiusXl),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = DesignTokens.heroElevation)
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
+                Column(modifier = Modifier.padding(DesignTokens.spaceXxl)) {
                     TabRow(
                         selectedTabIndex = if (isRegister) 1 else 0,
                         containerColor = Color.Transparent,
-                        contentColor = Color(0xFFF43F5E)
+                        contentColor = MaterialTheme.colorScheme.primary
                     ) {
                         Tab(
                             selected = !isRegister,
@@ -95,7 +92,7 @@ fun AuthScreen(viewModel: LoveViewModel) {
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(DesignTokens.spaceXl))
 
                     OutlinedTextField(
                         value = username,
@@ -104,7 +101,7 @@ fun AuthScreen(viewModel: LoveViewModel) {
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(DesignTokens.spaceMd))
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -116,7 +113,7 @@ fun AuthScreen(viewModel: LoveViewModel) {
                     )
 
                     if (isRegister) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(DesignTokens.spaceMd))
                         OutlinedTextField(
                             value = displayName,
                             onValueChange = { displayName = it },
@@ -124,7 +121,7 @@ fun AuthScreen(viewModel: LoveViewModel) {
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(DesignTokens.spaceMd))
                         OutlinedTextField(
                             value = pairDate,
                             onValueChange = { pairDate = it },
@@ -135,17 +132,17 @@ fun AuthScreen(viewModel: LoveViewModel) {
                     }
 
                     error?.let {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(DesignTokens.spaceMd))
                         Text(
                             text = it,
-                            color = Color(0xFFE11D48),
+                            color = MaterialTheme.colorScheme.error,
                             fontSize = 13.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(DesignTokens.spaceXl))
                     Button(
                         onClick = {
                             if (isRegister) {
@@ -156,10 +153,10 @@ fun AuthScreen(viewModel: LoveViewModel) {
                         },
                         enabled = !loading && username.isNotBlank() && password.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFF43F5E),
-                            contentColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(DesignTokens.radiusLg),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -177,11 +174,11 @@ fun AuthScreen(viewModel: LoveViewModel) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(DesignTokens.spaceLg))
             Text(
                 text = "注册后即可获得专属邀请码，与恋人绑定实时同步",
                 fontSize = 12.sp,
-                color = Color(0xFF9CA3AF),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
