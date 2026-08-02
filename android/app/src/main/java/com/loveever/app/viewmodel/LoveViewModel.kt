@@ -440,6 +440,8 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun connectWebSocket(token: String) {
+        // 防止旧 token（绑定/重新登录前）的幽灵连接继续重连
+        if (currentToken() != token) return
         reconnectJob?.cancel()
         ws?.close(1000, "reconnect")
         val request = Request.Builder()
@@ -447,6 +449,11 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
             .header("Authorization", "Bearer $token")
             .build()
         ws = wsClient.newWebSocket(request, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                // 连接就绪后拉一次消息，弥补错过实时推送的情况
+                loadMessages()
+            }
+
             override fun onMessage(webSocket: WebSocket, text: String) {
                 handleWsMessage(text)
             }
@@ -463,6 +470,7 @@ class LoveViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun scheduleReconnect(token: String) {
         if (_auth.value !is AuthState.LoggedIn) return
+        if (currentToken() != token) return
         reconnectJob?.cancel()
         reconnectJob = viewModelScope.launch {
             delay(5000)
